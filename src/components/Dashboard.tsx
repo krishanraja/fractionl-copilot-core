@@ -6,23 +6,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, TrendingUp, TrendingDown, Brain, Target, DollarSign, Users, Eye, Share2, FileText, Lightbulb } from 'lucide-react';
+import { AlertCircle, TrendingUp, TrendingDown, Brain, Target, DollarSign, Users, Eye, Share2, FileText, Lightbulb, Calendar, Zap } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { AIInsightsPanel } from './AIInsightsPanel';
 import { GoalTracker } from './GoalTracker';
 import { MetricsOverview } from './MetricsOverview';
 import { CostTracker, Cost } from './CostTracker';
+import { DailyTracker } from './DailyTracker';
+import { ProgressVisualization } from './ProgressVisualization';
+import { MotivationalHeader } from './MotivationalHeader';
+import { useProgressTracking } from '@/hooks/useProgressTracking';
+import { MonthlyGoals } from '@/types/dashboard';
 
-interface MonthlyGoals {
-  month: string;
-  grossRevenue: number;
-  totalCosts: number;
-  siteVisits: number;
-  socialFollowers: number;
-  prArticles: number;
-  workshopCustomers: number;
-  advisoryCustomers: number;
-}
+// MonthlyGoals interface moved to types/dashboard.ts
 
 const MONTHS = [
   'Aug 2025', 'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025',
@@ -35,6 +31,7 @@ export const Dashboard = () => {
   const [costs, setCosts] = useState<Record<string, Cost[]>>({});
   const [aiInsights, setAiInsights] = useState<string>('');
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [dashboardView, setDashboardView] = useState<'goals' | 'tracking'>('tracking');
 
   // Initialize default goals for all months
   useEffect(() => {
@@ -84,6 +81,19 @@ export const Dashboard = () => {
 
   const currentCosts = costs[selectedMonth] || [];
   const totalCosts = currentCosts.reduce((sum, cost) => sum + cost.amount, 0);
+
+  // Initialize progress tracking
+  const {
+    todaysActuals,
+    metricsProgress,
+    streakData,
+    achievements,
+    overallScore,
+    motivationalMessage,
+    todaysWins,
+    monthProgress,
+    updateDailyActuals,
+  } = useProgressTracking(currentGoals);
 
   const getAIInsights = async () => {
     setIsLoadingInsights(true);
@@ -140,49 +150,126 @@ export const Dashboard = () => {
               <p className="text-muted-foreground">AI Business Intelligence Dashboard</p>
             </div>
           </div>
-          <Button 
-            onClick={getAIInsights} 
-            disabled={isLoadingInsights}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            <Brain className="w-4 h-4 mr-2" />
-            {isLoadingInsights ? 'Analyzing...' : 'Get AI Insights'}
-          </Button>
+          <div className="flex items-center space-x-3">
+            {/* View Toggle */}
+            <div className="flex items-center bg-muted rounded-lg p-1">
+              <Button
+                variant={dashboardView === 'tracking' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDashboardView('tracking')}
+                className="text-xs"
+              >
+                <Zap className="w-3 h-3 mr-1" />
+                Daily Tracking
+              </Button>
+              <Button
+                variant={dashboardView === 'goals' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDashboardView('goals')}
+                className="text-xs"
+              >
+                <Target className="w-3 h-3 mr-1" />
+                Goal Setting
+              </Button>
+            </div>
+            <Button 
+              onClick={getAIInsights} 
+              disabled={isLoadingInsights}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              {isLoadingInsights ? 'Analyzing...' : 'Get AI Insights'}
+            </Button>
+          </div>
         </div>
 
-        {/* Month Selection */}
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="flex items-center text-card-foreground">
-              <Target className="w-5 h-5 mr-2 text-primary" />
-              Monthly Goal Tracker
-            </CardTitle>
-            <CardDescription>Select month and set your business targets (Aug 2025 - Jul 2026)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4 mb-6">
-              <Label htmlFor="month-select" className="text-sm font-medium">Month:</Label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-48 bg-input border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map(month => (
-                    <SelectItem key={month} value={month}>{month}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Motivational Header - Only show in tracking view */}
+        {dashboardView === 'tracking' && (
+          <MotivationalHeader
+            streakData={streakData}
+            achievements={achievements}
+            overallScore={overallScore}
+            todaysWins={todaysWins}
+            monthProgress={monthProgress}
+            motivationalMessage={motivationalMessage}
+          />
+        )}
+
+        {/* Dynamic Content Based on View */}
+        {dashboardView === 'goals' ? (
+          /* Goal Setting View */
+          <Card className="border-border bg-card">
+            <CardHeader>
+              <CardTitle className="flex items-center text-card-foreground">
+                <Target className="w-5 h-5 mr-2 text-primary" />
+                Monthly Goal Setting
+              </CardTitle>
+              <CardDescription>Select month and set your business targets (Aug 2025 - Jul 2026)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4 mb-6">
+                <Label htmlFor="month-select" className="text-sm font-medium">Month:</Label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-48 bg-input border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map(month => (
+                      <SelectItem key={month} value={month}>{month}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="ml-auto">
+                  Net Profit: ${netProfit.toLocaleString()} ({profitMargin.toFixed(1)}%)
+                </Badge>
+              </div>
+
+              <GoalTracker 
+                goals={currentGoals}
+                onUpdateGoal={updateGoal}
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          /* Daily Tracking View */
+          <div className="space-y-6">
+            {/* Month Selection Bar */}
+            <div className="flex items-center justify-between bg-card border border-border rounded-lg p-4">
+              <div className="flex items-center space-x-4">
+                <Label htmlFor="month-select" className="text-sm font-medium">Tracking Month:</Label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-48 bg-input border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map(month => (
+                      <SelectItem key={month} value={month}>{month}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Badge variant="outline" className="ml-auto">
                 Net Profit: ${netProfit.toLocaleString()} ({profitMargin.toFixed(1)}%)
               </Badge>
             </div>
 
-            <GoalTracker 
-              goals={currentGoals}
-              onUpdateGoal={updateGoal}
+            {/* Daily Tracker */}
+            <DailyTracker
+              currentGoals={currentGoals}
+              dailyActuals={todaysActuals}
+              onUpdateDaily={updateDailyActuals}
             />
-          </CardContent>
-        </Card>
+
+            {/* Progress Visualization */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-semibold text-foreground">Today's Progress</h3>
+              </div>
+              <ProgressVisualization metrics={metricsProgress} />
+            </div>
+          </div>
+        )}
 
         {/* Metrics Overview */}
         <MetricsOverview goals={currentGoals} />
