@@ -255,7 +255,7 @@ export const useProgressTracking = (currentGoals: MonthlyGoals) => {
   const overallScore = useMemo(() => {
     const scores = metricsProgress.map(metric => metric.progress.percentage);
     const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-    return Math.min(Math.max(avgScore, 0), 100);
+    return Math.round(Math.min(Math.max(avgScore, 0), 100));
   }, [metricsProgress]);
 
   // Get motivational message
