@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_conversations: {
+        Row: {
+          context: Json | null
+          conversation_type: string
+          created_at: string
+          id: string
+          question: string
+          response: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          conversation_type?: string
+          created_at?: string
+          id?: string
+          question: string
+          response: string
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          conversation_type?: string
+          created_at?: string
+          id?: string
+          question?: string
+          response?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_business_context: {
+        Row: {
+          business_type: string | null
+          communication_style: string | null
+          created_at: string
+          id: string
+          main_challenges: string[] | null
+          priorities: string[] | null
+          target_market: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_type?: string | null
+          communication_style?: string | null
+          created_at?: string
+          id?: string
+          main_challenges?: string[] | null
+          priorities?: string[] | null
+          target_market?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_type?: string | null
+          communication_style?: string | null
+          created_at?: string
+          id?: string
+          main_challenges?: string[] | null
+          priorities?: string[] | null
+          target_market?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
