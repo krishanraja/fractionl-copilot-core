@@ -16,7 +16,9 @@ import {
   Send,
   Loader2,
   History,
-  Settings
+  Settings,
+  Download,
+  Bot
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,12 +40,14 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingContext, setIsLoadingContext] = useState(false);
   const [businessContext, setBusinessContext] = useState({
     business_type: '',
     target_market: '',
     main_challenges: [] as string[],
     priorities: [] as string[],
   });
+  const [isContextAutoLoaded, setIsContextAutoLoaded] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -139,6 +143,67 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadBusinessContextFromAssistant = async () => {
+    setIsLoadingContext(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to use AI features.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('ai-strategic-analysis', {
+        body: {
+          loadBusinessContext: true,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.businessContext) {
+        // Parse the assistant response to extract business context
+        const context = data.businessContext;
+        
+        // Simple parsing - in a real app, you might want more sophisticated parsing
+        const businessType = context.match(/business type[:\s]*(.*?)(?:\n|\.)/i)?.[1] || '';
+        const targetMarket = context.match(/target market[:\s]*(.*?)(?:\n|\.)/i)?.[1] || '';
+        const challenges = context.match(/challenges?[:\s]*(.*?)(?:\n\n|\. [A-Z])/i)?.[1]?.split(/[,;]/) || [];
+        const priorities = context.match(/priorities?[:\s]*(.*?)(?:\n\n|\. [A-Z])/i)?.[1]?.split(/[,;]/) || [];
+
+        setBusinessContext({
+          business_type: businessType.trim(),
+          target_market: targetMarket.trim(),
+          main_challenges: challenges.map(c => c.trim()).filter(Boolean),
+          priorities: priorities.map(p => p.trim()).filter(Boolean),
+        });
+
+        setIsContextAutoLoaded(true);
+
+        toast({
+          title: "Business context loaded",
+          description: "Successfully loaded business details from your AI Assistant.",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading business context from assistant:', error);
+      toast({
+        title: "Error loading from Assistant",
+        description: "Failed to load business context. You can enter it manually below.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingContext(false);
     }
   };
 
@@ -266,10 +331,34 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
             <CardHeader>
               <CardTitle>Business Context</CardTitle>
               <CardDescription>
-                Help the AI understand your business better for more personalized insights.
+                Load business details from your trained OpenAI Assistant or enter them manually for personalized insights.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 p-4 bg-muted/50 rounded-lg">
+                <Button 
+                  onClick={loadBusinessContextFromAssistant}
+                  disabled={isLoadingContext}
+                  variant="default"
+                  className="flex-1"
+                >
+                  {isLoadingContext ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Bot className="h-4 w-4 mr-2" />
+                  )}
+                  Auto-Load from AI Assistant
+                </Button>
+                {isContextAutoLoaded && (
+                  <Badge variant="secondary" className="self-center">
+                    <Download className="h-3 w-3 mr-1" />
+                    Auto-loaded
+                  </Badge>
+                )}
+              </div>
+              
+              <Separator />
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Business Type</label>

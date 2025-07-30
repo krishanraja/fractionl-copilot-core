@@ -15,12 +15,13 @@ serve(async (req) => {
 
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const assistantId = Deno.env.get('OPENAI_ASSISTANT_ID');
     
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    const { question, context, conversationType = 'quick_insight' } = await req.json();
+    const { question, context, conversationType = 'quick_insight', loadBusinessContext = false } = await req.json();
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -41,11 +42,241 @@ serve(async (req) => {
       throw new Error('Authentication failed');
     }
 
-    console.log('Processing AI request:', { question, conversationType, userId: user.id });
+    console.log('Processing AI request:', { question, conversationType, loadBusinessContext, userId: user.id });
 
-    // Create the system prompt based on conversation type
+    // Handle business context loading from Assistant
+    if (loadBusinessContext && assistantId) {
+      try {
+        // Create a thread with the Assistant
+        const threadResponse = await fetch('https://api.openai.com/v1/threads', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2',
+          },
+          body: JSON.stringify({}),
+        });
+
+        if (!threadResponse.ok) {
+          throw new Error(`Failed to create thread: ${threadResponse.statusText}`);
+        }
+
+        const thread = await threadResponse.json();
+
+        // Send message to get business context
+        await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2',
+          },
+          body: JSON.stringify({
+            role: 'user',
+            content: 'Please provide a comprehensive summary of the business details including: business type, target market, main challenges, and current priorities. Format this as a structured response.',
+          }),
+        });
+
+        // Run the assistant
+        const runResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2',
+          },
+          body: JSON.stringify({
+            assistant_id: assistantId,
+          }),
+        });
+
+        if (!runResponse.ok) {
+          throw new Error(`Failed to run assistant: ${runResponse.statusText}`);
+        }
+
+        const run = await runResponse.json();
+
+        // Poll for completion
+        let runStatus = run.status;
+        let attempts = 0;
+        const maxAttempts = 30;
+
+        while (runStatus !== 'completed' && runStatus !== 'failed' && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'OpenAI-Beta': 'assistants=v2',
+            },
+          });
+
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            runStatus = statusData.status;
+          }
+          attempts++;
+        }
+
+        if (runStatus === 'completed') {
+          // Get the assistant's response
+          const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'OpenAI-Beta': 'assistants=v2',
+            },
+          });
+
+          if (messagesResponse.ok) {
+            const messages = await messagesResponse.json();
+            const assistantMessage = messages.data.find(msg => msg.role === 'assistant');
+            
+            if (assistantMessage && assistantMessage.content[0]?.text?.value) {
+              const businessContext = assistantMessage.content[0].text.value;
+              
+              return new Response(JSON.stringify({ 
+                businessContext,
+                success: true 
+              }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
+          }
+        }
+
+        throw new Error('Failed to get business context from assistant');
+      } catch (error) {
+        console.error('Error loading business context from assistant:', error);
+        return new Response(JSON.stringify({ 
+          error: 'Failed to load business context from assistant',
+          fallback: true 
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Regular AI conversation handling
     let systemPrompt = '';
-    
+    let apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+    let requestBody: any;
+    let headers: any = {
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Content-Type': 'application/json',
+    };
+
+    // Use Assistant API if assistant is configured and this is not a quick insight
+    if (assistantId && conversationType !== 'quick_insight') {
+      // Create thread for assistant conversation
+      const threadResponse = await fetch('https://api.openai.com/v1/threads', {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'OpenAI-Beta': 'assistants=v2',
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (threadResponse.ok) {
+        const thread = await threadResponse.json();
+
+        // Send message
+        await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'OpenAI-Beta': 'assistants=v2',
+          },
+          body: JSON.stringify({
+            role: 'user',
+            content: `${question}\n\nContext: ${JSON.stringify(context)}`,
+          }),
+        });
+
+        // Run assistant
+        const runResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'OpenAI-Beta': 'assistants=v2',
+          },
+          body: JSON.stringify({
+            assistant_id: assistantId,
+          }),
+        });
+
+        if (runResponse.ok) {
+          const run = await runResponse.json();
+          
+          // Poll for completion
+          let runStatus = run.status;
+          let attempts = 0;
+          const maxAttempts = 30;
+
+          while (runStatus !== 'completed' && runStatus !== 'failed' && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+              headers: {
+                ...headers,
+                'OpenAI-Beta': 'assistants=v2',
+              },
+            });
+
+            if (statusResponse.ok) {
+              const statusData = await statusResponse.json();
+              runStatus = statusData.status;
+            }
+            attempts++;
+          }
+
+          if (runStatus === 'completed') {
+            const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+              headers: {
+                ...headers,
+                'OpenAI-Beta': 'assistants=v2',
+              },
+            });
+
+            if (messagesResponse.ok) {
+              const messages = await messagesResponse.json();
+              const assistantMessage = messages.data.find(msg => msg.role === 'assistant');
+              
+              if (assistantMessage && assistantMessage.content[0]?.text?.value) {
+                const aiResponse = assistantMessage.content[0].text.value;
+                
+                // Store the conversation
+                await supabase
+                  .from('ai_conversations')
+                  .insert({
+                    user_id: user.id,
+                    question,
+                    response: aiResponse,
+                    context,
+                    conversation_type: conversationType
+                  });
+
+                return new Response(JSON.stringify({ 
+                  response: aiResponse,
+                  conversationType,
+                  usedAssistant: true
+                }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('Assistant API failed, falling back to chat completions');
+    }
+
+    // Fallback to regular chat completions
     if (conversationType === 'quick_insight') {
       systemPrompt = `You are a strategic business advisor providing quick, actionable insights. 
       
@@ -60,13 +291,9 @@ serve(async (req) => {
       Provide detailed, strategic analysis with specific recommendations. Consider trends, patterns, and long-term implications. Be thorough but practical.`;
     }
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         model: 'gpt-4.1-2025-04-14',
         messages: [
