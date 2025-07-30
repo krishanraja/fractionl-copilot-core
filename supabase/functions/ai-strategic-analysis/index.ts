@@ -28,21 +28,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the user from the request
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      throw new Error('Authentication failed');
-    }
-
-    console.log('Processing AI request:', { question, conversationType, loadBusinessContext, userId: user.id });
+    // Use a default user ID for password gate system
+    const userId = 'default_user';
+    
+    console.log('Processing AI request:', { question, conversationType, loadBusinessContext, userId });
 
     // Handle business context loading from Assistant
     if (loadBusinessContext && assistantId) {
@@ -253,7 +242,7 @@ serve(async (req) => {
                 await supabase
                   .from('ai_conversations')
                   .insert({
-                    user_id: user.id,
+                    user_id: userId,
                     question,
                     response: aiResponse,
                     context,
@@ -316,7 +305,7 @@ serve(async (req) => {
     const { error: insertError } = await supabase
       .from('ai_conversations')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         question,
         response: aiResponse,
         context,

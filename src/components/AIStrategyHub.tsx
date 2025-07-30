@@ -53,7 +53,11 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
   useEffect(() => {
     loadConversations();
     loadBusinessContext();
-  }, []);
+    // Auto-load business context from Assistant on mount
+    if (!isContextAutoLoaded) {
+      loadBusinessContextFromAssistant();
+    }
+  }, [isContextAutoLoaded]);
 
   const loadConversations = async () => {
     try {
@@ -97,17 +101,6 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
 
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to use AI strategy features.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('ai-strategic-analysis', {
         body: {
           question: currentQuestion,
@@ -118,10 +111,7 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
             timestamp: new Date().toISOString()
           },
           conversationType: 'strategic'
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        }
       });
 
       if (error) throw error;
@@ -149,24 +139,10 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
   const loadBusinessContextFromAssistant = async () => {
     setIsLoadingContext(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to use AI features.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('ai-strategic-analysis', {
         body: {
           loadBusinessContext: true,
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        }
       });
 
       if (error) throw error;
@@ -190,18 +166,17 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
 
         setIsContextAutoLoaded(true);
 
+        // Auto-save the loaded context
+        updateBusinessContext();
+
         toast({
-          title: "Business context loaded",
-          description: "Successfully loaded business details from your AI Assistant.",
+          title: "Business context synced",
+          description: "AI Assistant context loaded and saved automatically.",
         });
       }
     } catch (error) {
       console.error('Error loading business context from assistant:', error);
-      toast({
-        title: "Error loading from Assistant",
-        description: "Failed to load business context. You can enter it manually below.",
-        variant: "destructive",
-      });
+      // Silently fail for auto-loading, don't show error toast
     } finally {
       setIsLoadingContext(false);
     }
@@ -209,13 +184,13 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
 
   const updateBusinessContext = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // For the password gate system, we'll use a simple user ID
+      const userId = 'default_user';
 
       const { error } = await supabase
         .from('user_business_context')
         .upsert({
-          user_id: user.id,
+          user_id: userId,
           ...businessContext,
         });
 
@@ -335,25 +310,27 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3 p-4 bg-muted/50 rounded-lg">
-                <Button 
-                  onClick={loadBusinessContextFromAssistant}
-                  disabled={isLoadingContext}
-                  variant="default"
-                  className="flex-1"
-                >
-                  {isLoadingContext ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Bot className="h-4 w-4 mr-2" />
-                  )}
-                  Auto-Load from AI Assistant
-                </Button>
-                {isContextAutoLoaded && (
-                  <Badge variant="secondary" className="self-center">
+              <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">AI Assistant Integration</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isLoadingContext ? 'Syncing with your trained AI Assistant...' : 
+                       isContextAutoLoaded ? 'Business context synced with AI Assistant' :
+                       'Auto-sync enabled for seamless AI experience'}
+                    </p>
+                  </div>
+                </div>
+                {isLoadingContext ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : isContextAutoLoaded ? (
+                  <Badge variant="secondary">
                     <Download className="h-3 w-3 mr-1" />
-                    Auto-loaded
+                    Synced
                   </Badge>
+                ) : (
+                  <Badge variant="outline">Connecting...</Badge>
                 )}
               </div>
               
