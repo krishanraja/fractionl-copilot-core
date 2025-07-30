@@ -11,6 +11,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { AIInsightsPanel } from './AIInsightsPanel';
 import { GoalTracker } from './GoalTracker';
 import { MetricsOverview } from './MetricsOverview';
+import { CostTracker, Cost } from './CostTracker';
 
 interface MonthlyGoals {
   month: string;
@@ -31,6 +32,7 @@ const MONTHS = [
 export const Dashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState('Aug 2025');
   const [goals, setGoals] = useState<Record<string, MonthlyGoals>>({});
+  const [costs, setCosts] = useState<Record<string, Cost[]>>({});
   const [aiInsights, setAiInsights] = useState<string>('');
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
 
@@ -73,6 +75,16 @@ export const Dashboard = () => {
     }));
   };
 
+  const updateCosts = (newCosts: Cost[]) => {
+    setCosts(prev => ({
+      ...prev,
+      [selectedMonth]: newCosts
+    }));
+  };
+
+  const currentCosts = costs[selectedMonth] || [];
+  const totalCosts = currentCosts.reduce((sum, cost) => sum + cost.amount, 0);
+
   const getAIInsights = async () => {
     setIsLoadingInsights(true);
     try {
@@ -107,7 +119,7 @@ export const Dashboard = () => {
     return { status: 'destructive', icon: TrendingDown, message: 'Below target' };
   };
 
-  const netProfit = currentGoals.grossRevenue - currentGoals.totalCosts;
+  const netProfit = currentGoals.grossRevenue - totalCosts;
   const profitMargin = currentGoals.grossRevenue > 0 ? (netProfit / currentGoals.grossRevenue) * 100 : 0;
 
   return (
@@ -172,15 +184,18 @@ export const Dashboard = () => {
         <MetricsOverview goals={currentGoals} />
 
         <Tabs defaultValue="analytics" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 bg-muted">
+          <TabsList className="grid w-full grid-cols-4 bg-muted">
             <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              Analytics Dashboard
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="costs" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Cost Tracking
             </TabsTrigger>
             <TabsTrigger value="insights" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               AI Insights
             </TabsTrigger>
             <TabsTrigger value="projections" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              Strategic Projections
+              Projections
             </TabsTrigger>
           </TabsList>
 
@@ -247,6 +262,13 @@ export const Dashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="costs">
+            <CostTracker 
+              costs={currentCosts}
+              onUpdateCosts={updateCosts}
+            />
           </TabsContent>
 
           <TabsContent value="insights">
