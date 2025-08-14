@@ -164,7 +164,7 @@ serve(async (req) => {
 
               console.log('Parsed business context:', parsedContext);
 
-              // Save the business context to the database
+              // Save the business context to the database using UPSERT
               const { error: saveError } = await supabase
                 .from('user_business_context')
                 .upsert({
@@ -173,6 +173,8 @@ serve(async (req) => {
                   target_market: parsedContext.target_market,
                   main_challenges: parsedContext.main_challenges,
                   priorities: parsedContext.priorities,
+                }, {
+                  onConflict: 'user_id'
                 });
 
               if (saveError) {
@@ -212,7 +214,7 @@ serve(async (req) => {
           priorities: ['Complete AI Assistant setup'],
         };
 
-        // Save the default context
+        // Save the default context using UPSERT
         try {
           const { error: saveError } = await supabase
             .from('user_business_context')
@@ -222,6 +224,8 @@ serve(async (req) => {
               target_market: defaultContext.target_market,
               main_challenges: defaultContext.main_challenges,
               priorities: defaultContext.priorities,
+            }, {
+              onConflict: 'user_id'
             });
 
           if (!saveError) {

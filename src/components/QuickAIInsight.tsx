@@ -28,17 +28,6 @@ export const QuickAIInsight = ({ currentMetrics }: QuickAIInsightProps) => {
 
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to use AI insights.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('ai-strategic-analysis', {
         body: {
           question,
@@ -47,9 +36,6 @@ export const QuickAIInsight = ({ currentMetrics }: QuickAIInsightProps) => {
             timestamp: new Date().toISOString()
           },
           conversationType: 'quick_insight'
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
