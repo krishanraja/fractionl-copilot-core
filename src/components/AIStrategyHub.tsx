@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AIStrategyHubProps {
   currentMetrics: any;
@@ -49,6 +50,7 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
   });
   const [isContextAutoLoaded, setIsContextAutoLoaded] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadConversations();
@@ -60,11 +62,13 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
   }, [isContextAutoLoaded]);
 
   const loadConversations = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('ai_conversations')
         .select('*')
-        .eq('user_id', 'default_user')
+        .eq('user_id', user.id)
         .eq('conversation_type', 'strategic')
         .order('created_at', { ascending: false })
         .limit(10);
@@ -77,11 +81,13 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
   };
 
   const loadBusinessContext = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('user_business_context')
         .select('*')
-        .eq('user_id', 'default_user')
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (error) throw error;
@@ -200,14 +206,13 @@ export const AIStrategyHub = ({ currentMetrics, monthlyGoals }: AIStrategyHubPro
   };
 
   const updateBusinessContext = async () => {
+    if (!user) return;
+    
     try {
-      // For the password gate system, we'll use a simple user ID
-      const userId = 'default_user';
-
       const { error } = await supabase
         .from('user_business_context')
         .upsert({
-          user_id: userId,
+          user_id: user.id,
           ...businessContext,
         });
 

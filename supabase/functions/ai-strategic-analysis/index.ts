@@ -21,15 +21,38 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Get the authorization header
+    const authorization = req.headers.get('Authorization');
+    if (!authorization) {
+      return new Response(JSON.stringify({ error: 'Authorization required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { question, context, conversationType = 'quick_insight', loadBusinessContext = false } = await req.json();
     
-    // Initialize Supabase client
+    // Initialize Supabase client with the user's token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: {
+        headers: {
+          Authorization: authorization,
+        },
+      },
+    });
 
-    // Use a default user ID for password gate system
-    const userId = 'default_user';
+    // Get the authenticated user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Authentication failed' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const userId = user.id;
     
     console.log('Processing AI request:', { question, conversationType, loadBusinessContext, userId });
 
