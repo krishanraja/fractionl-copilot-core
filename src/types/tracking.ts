@@ -94,6 +94,41 @@ export interface MetricProgress {
   isReversed?: boolean;
 }
 
+export interface Opportunity {
+  id?: string;
+  user_id: string;
+  type: 'workshop' | 'advisory' | 'lecture' | 'pr';
+  title: string;
+  company?: string;
+  contact_person?: string;
+  stage: 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost';
+  probability: number; // 0-100
+  estimated_value: number;
+  estimated_close_date?: string; // YYYY-MM-DD format
+  notes?: string;
+  month: string; // YYYY-MM format
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PipelineStats {
+  totalOpportunities: number;
+  totalValue: number;
+  weightedValue: number;
+  averageProbability: number;
+  conversionRate: number;
+  stageDistribution: Record<string, number>;
+}
+
+export interface MonthlyProgress {
+  month: string;
+  target: number;
+  achieved: number;
+  inPipeline: number;
+  pipelineValue: number;
+  conversionRate: number;
+}
+
 export interface Achievement {
   id: string;
   title: string;

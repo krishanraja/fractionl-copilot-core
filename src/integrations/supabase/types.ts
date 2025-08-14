@@ -158,6 +158,57 @@ export type Database = {
         }
         Relationships: []
       }
+      opportunities: {
+        Row: {
+          company: string | null
+          contact_person: string | null
+          created_at: string
+          estimated_close_date: string | null
+          estimated_value: number | null
+          id: string
+          month: string
+          notes: string | null
+          probability: number | null
+          stage: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          contact_person?: string | null
+          created_at?: string
+          estimated_close_date?: string | null
+          estimated_value?: number | null
+          id?: string
+          month: string
+          notes?: string | null
+          probability?: number | null
+          stage?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          company?: string | null
+          contact_person?: string | null
+          created_at?: string
+          estimated_close_date?: string | null
+          estimated_value?: number | null
+          id?: string
+          month?: string
+          notes?: string | null
+          probability?: number | null
+          stage?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       revenue_entries: {
         Row: {
           amount: number

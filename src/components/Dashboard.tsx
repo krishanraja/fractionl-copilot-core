@@ -17,18 +17,18 @@ import { MetricsOverview } from './MetricsOverview';
 import { CostTracker, Cost } from './CostTracker';
 import { ProgressVisualization } from './ProgressVisualization';
 import { MotivationalHeader } from './MotivationalHeader';
+import { PipelineContent } from './PipelineContent';
 import { useTrackingData } from '@/hooks/useTrackingData';
 
-const MONTHS = [
-  '2024-08', '2024-09', '2024-10', '2024-11', '2024-12',
-  '2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06', '2025-07'
-];
+import { generateFutureMonths } from '@/utils/monthUtils';
 
 export const Dashboard = () => {
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [costs, setCosts] = useState<Record<string, Cost[]>>({});
-  const [dashboardView, setDashboardView] = useState<'planning' | 'tracking' | 'ai-strategy'>('tracking');
+  const [dashboardView, setDashboardView] = useState<'planning' | 'pipeline' | 'ai-strategy'>('pipeline');
+  
+  const availableMonths = generateFutureMonths();
 
   // Use the new tracking data hook
   const {
@@ -96,33 +96,24 @@ export const Dashboard = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {metricsProgress.length > 0 ? 
-                  // Use available months from tracking data hook
-                  ['2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08', '2025-09', '2025-10', '2025-11', '2025-12'].map(month => (
-                    <SelectItem key={month} value={month}>
-                      {formatMonth(month)}
-                    </SelectItem>
-                  )) : 
-                  // Fallback for loading state
-                  MONTHS.map(month => (
-                    <SelectItem key={month} value={month}>
-                      {formatMonth(month)}
-                    </SelectItem>
-                  ))
-                }
+                {availableMonths.map(month => (
+                  <SelectItem key={month} value={month}>
+                    {formatMonth(month)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             
             {/* View Toggle */}
             <div className="flex items-center bg-muted rounded-lg p-1">
               <Button
-                variant={dashboardView === 'tracking' ? 'default' : 'ghost'}
+                variant={dashboardView === 'pipeline' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setDashboardView('tracking')}
+                onClick={() => setDashboardView('pipeline')}
                 className="text-xs"
               >
                 <Zap className="w-3 h-3 mr-1" />
-                Daily Tracking
+                Pipeline
               </Button>
               <Button
                 variant={dashboardView === 'planning' ? 'default' : 'ghost'}
@@ -146,8 +137,8 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Motivational Header - Only show in tracking view */}
-        {dashboardView === 'tracking' && !loading && (
+        {/* Show pipeline content based on view */}
+        {dashboardView === 'pipeline' && !loading && (
           <MotivationalHeader
             streakData={{
               currentStreak: dailyProgress.length,
@@ -226,53 +217,12 @@ export const Dashboard = () => {
               </Card>
             </div>
           </div>
-        ) : dashboardView === 'tracking' && !loading ? (
-          /* Daily Tracking View */
-          <div className="space-y-6">
-            <QuickAIInsight currentMetrics={{
-              currentGoals: {
-                month: selectedMonth,
-                grossRevenue: monthlyGoals?.revenue_forecast || 0,
-                totalCosts: monthlyGoals?.cost_budget || 0,
-                siteVisits: monthlySnapshots?.site_visits || 0,
-                socialFollowers: monthlySnapshots?.social_followers || 0,
-                prArticles: monthlyGoals?.pr_target || 0,
-                workshopCustomers: monthlyGoals?.workshops_target || 0,
-                advisoryCustomers: monthlyGoals?.advisory_target || 0
-              },
-              todaysActuals: {
-                date: new Date().toISOString().split('T')[0],
-                month: selectedMonth,
-                grossRevenue: 0, // Revenue is now tracked separately
-                totalCosts: 0, // Costs are now tracked separately
-                siteVisits: monthlySnapshots?.site_visits || 0,
-                socialFollowers: monthlySnapshots?.social_followers || 0,
-                prArticles: todaysProgress?.pr_progress || 0,
-                workshopCustomers: todaysProgress?.workshops_progress || 0,
-                advisoryCustomers: todaysProgress?.advisory_progress || 0
-              },
-              overallScore,
-              monthProgress: 85,
-              totalCosts,
-              netProfit,
-              profitMargin
-            }} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <DailyProgressTracker 
-                todaysProgress={todaysProgress}
-                onUpdateProgress={updateDailyProgress}
-              />
-              
-              <CurrentStateTracking 
-                snapshots={monthlySnapshots}
-                onUpdateSnapshots={updateMonthlySnapshots}
-                selectedMonth={selectedMonth}
-              />
-            </div>
-
-            <ProgressVisualization 
-              metrics={metricsProgress}
+        ) : dashboardView === 'pipeline' && !loading ? (
+          /* Pipeline View */
+          <div>
+            <PipelineContent
+              selectedMonth={selectedMonth}
+              monthlyGoals={monthlyGoals}
             />
           </div>
         ) : dashboardView === 'ai-strategy' ? (
@@ -325,8 +275,8 @@ export const Dashboard = () => {
           </div>
         )}
 
-        {/* Metrics Overview - Only show in tracking view */}
-        {dashboardView === 'tracking' && !loading && (
+        {/* Remove old tracking view content */}
+        {false && (
           <MetricsOverview goals={{
             month: selectedMonth,
             grossRevenue: monthlyGoals?.revenue_forecast || 0,
@@ -339,8 +289,8 @@ export const Dashboard = () => {
           }} />
         )}
 
-        {/* Analytics Tabs - Only show in tracking view */}
-        {dashboardView === 'tracking' && !loading && (
+        {/* Remove old tracking view content */}
+        {false && (
           <Tabs defaultValue="analytics" className="space-y-4">
           <TabsList className="grid w-full grid-cols-3 bg-muted">
             <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
