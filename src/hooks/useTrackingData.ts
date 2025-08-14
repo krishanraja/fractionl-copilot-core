@@ -93,6 +93,9 @@ export const useTrackingData = (selectedMonth: string) => {
   const [dailyProgress, setDailyProgress] = useState<DailyProgress[]>([]);
   const [todaysProgress, setTodaysProgress] = useState<DailyProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Available months for selection (current + next 12)
+  const availableMonths = useMemo(() => generateFutureMonths(), []);
   const { toast } = useToast();
 
   const today = new Date().toISOString().split('T')[0];

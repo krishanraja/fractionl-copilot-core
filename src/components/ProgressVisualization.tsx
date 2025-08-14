@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, TrendingDown, Target, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
-import { MetricProgress } from '@/types/dashboard';
+import { MetricProgress } from '@/types/tracking';
 
 interface ProgressVisualizationProps {
   metrics: MetricProgress[];

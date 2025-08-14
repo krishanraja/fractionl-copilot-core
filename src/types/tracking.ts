@@ -4,8 +4,8 @@ export interface MonthlyGoals {
   id?: string;
   user_id: string;
   month: string; // YYYY-MM format
-  revenue_target: number;
-  cost_target: number;
+  revenue_forecast: number; // Monthly revenue forecast
+  cost_budget: number; // Monthly cost budget
   workshops_target: number;
   advisory_target: number;
   lectures_target: number;
@@ -29,13 +29,23 @@ export interface DailyProgress {
   user_id: string;
   date: string; // YYYY-MM-DD format
   month: string; // YYYY-MM format
-  revenue_progress: number;
-  cost_progress: number;
   workshops_progress: number;
   advisory_progress: number;
   lectures_progress: number;
   pr_progress: number;
   notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface RevenueEntry {
+  id?: string;
+  user_id: string;
+  date: string; // YYYY-MM-DD format
+  month: string; // YYYY-MM format
+  amount: number;
+  source: string; // 'workshop' | 'advisory' | 'lecture' | 'other'
+  description?: string;
   created_at?: string;
   updated_at?: string;
 }
