@@ -90,6 +90,25 @@ Deno.serve(async (req) => {
 });
 
 function handleAuthUrl(credentials: GoogleCredentials) {
+  console.log('Credentials structure:', JSON.stringify(credentials, null, 2));
+  
+  // Validate credentials structure
+  if (!credentials.web) {
+    throw new Error('Invalid Google OAuth credentials: missing "web" object');
+  }
+  
+  if (!credentials.web.auth_uri) {
+    throw new Error('Invalid Google OAuth credentials: missing "auth_uri"');
+  }
+  
+  if (!credentials.web.client_id) {
+    throw new Error('Invalid Google OAuth credentials: missing "client_id"');
+  }
+  
+  if (!credentials.web.redirect_uris || credentials.web.redirect_uris.length === 0) {
+    throw new Error('Invalid Google OAuth credentials: missing or empty "redirect_uris" array. Please add a redirect URI in your Google Cloud Console OAuth configuration.');
+  }
+  
   const authUrl = new URL(credentials.web.auth_uri);
   authUrl.searchParams.set('client_id', credentials.web.client_id);
   authUrl.searchParams.set('redirect_uri', credentials.web.redirect_uris[0]);
@@ -97,6 +116,8 @@ function handleAuthUrl(credentials: GoogleCredentials) {
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('access_type', 'offline');
   authUrl.searchParams.set('prompt', 'consent');
+
+  console.log('Generated auth URL:', authUrl.toString());
 
   return new Response(
     JSON.stringify({ authUrl: authUrl.toString() }),
