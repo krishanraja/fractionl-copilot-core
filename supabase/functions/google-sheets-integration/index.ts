@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 // Deployment marker for debugging
-const DEPLOYMENT_VERSION = '3.0-FORCED'
+const DEPLOYMENT_VERSION = '3.1-FORCED-NO-AUTH-TEST'
 
 interface GoogleCredentials {
   web: {
@@ -26,11 +26,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Parse request first to check for test endpoints
+    // Parse request URL first to check for test endpoints BEFORE authentication
     const url = new URL(req.url);
     const action = url.searchParams.get('action');
     
-    // Add test endpoint for secret verification (no auth needed) - FORCE DEPLOYMENT v2.1
+    // Add test endpoint for secret verification (no auth needed) - FORCE DEPLOYMENT v3.1
     if (action === 'test_secret') {
       const rawCredentials = Deno.env.get('GOOGLE_OAUTH_CREDENTIALS');
       const hasSecret = !!rawCredentials;
@@ -57,12 +57,13 @@ Deno.serve(async (req) => {
           parseError,
           timestamp: new Date().toISOString(),
           deploymentVersion: DEPLOYMENT_VERSION,
-          message: 'Secret test endpoint - v3.0 deployment'
+          message: 'Secret test endpoint - v3.1 deployment - NO AUTH REQUIRED'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // For all other actions, require authentication
     // Initialize Supabase client for authenticated requests
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
