@@ -51,6 +51,30 @@ export const GoogleSheetsIntegration = ({ selectedMonth }: GoogleSheetsIntegrati
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      // First test the secret endpoint to verify deployment and credentials
+      console.log('Testing secret endpoint first...');
+      const testResponse = await fetch(
+        `https://ksyuwacuigshvcyptlhe.supabase.co/functions/v1/google-sheets-integration?action=test_secret`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      const testData = await testResponse.json();
+      console.log('Secret test result:', testData);
+      
+      if (!testData.hasSecret) {
+        throw new Error('Google OAuth credentials are not configured in Supabase');
+      }
+      
+      if (!testData.isValidJson) {
+        throw new Error(`Google OAuth credentials are invalid JSON: ${testData.parseError}`);
+      }
+
+      // Now try the actual auth URL request
       const response = await fetch(
         `https://ksyuwacuigshvcyptlhe.supabase.co/functions/v1/google-sheets-integration?action=auth_url`,
         {
