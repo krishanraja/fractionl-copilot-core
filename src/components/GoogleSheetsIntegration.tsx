@@ -70,6 +70,8 @@ export const GoogleSheetsIntegration = ({ selectedMonth }: GoogleSheetsIntegrati
       const { data, error } = await supabase
         .from('sheets_integrations')
         .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
 
       if (error && error.code !== 'PGRST116') {
