@@ -50,14 +50,25 @@ export const GoogleSheetsIntegration = ({ selectedMonth }: GoogleSheetsIntegrati
   const handleAuthenticate = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('google-sheets-integration?action=auth_url', {
-        body: {},
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `https://ksyuwacuigshvcyptlhe.supabase.co/functions/v1/google-sheets-integration?action=auth_url`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({}),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Authentication failed');
+      }
+
+      const data = await response.json();
 
       if (data?.authUrl) {
         // Open authentication window
@@ -93,14 +104,23 @@ export const GoogleSheetsIntegration = ({ selectedMonth }: GoogleSheetsIntegrati
 
   const handleAuthCode = async (code: string) => {
     try {
-      const { error } = await supabase.functions.invoke('google-sheets-integration?action=exchange_code', {
-        body: { code },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `https://ksyuwacuigshvcyptlhe.supabase.co/functions/v1/google-sheets-integration?action=exchange_code`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ code }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Code exchange failed');
+      }
 
       toast({
         title: 'Authentication Successful',
@@ -120,16 +140,25 @@ export const GoogleSheetsIntegration = ({ selectedMonth }: GoogleSheetsIntegrati
   const handleCreateSheet = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('google-sheets-integration?action=create_sheet', {
-        body: { 
-          title: `Business Tracker - ${new Date().getFullYear()}`,
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `https://ksyuwacuigshvcyptlhe.supabase.co/functions/v1/google-sheets-integration?action=create_sheet`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ 
+            title: `Business Tracker - ${new Date().getFullYear()}`,
+          }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Sheet creation failed');
+      }
 
       toast({
         title: 'Spreadsheet Created',
@@ -151,17 +180,26 @@ export const GoogleSheetsIntegration = ({ selectedMonth }: GoogleSheetsIntegrati
   const handleExportData = async (dataType: string) => {
     setExporting(true);
     try {
-      const { error } = await supabase.functions.invoke('google-sheets-integration?action=export_data', {
-        body: { 
-          dataType,
-          month: selectedMonth,
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `https://ksyuwacuigshvcyptlhe.supabase.co/functions/v1/google-sheets-integration?action=export_data`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ 
+            dataType,
+            month: selectedMonth,
+          }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Export failed');
+      }
 
       toast({
         title: 'Export Successful',
