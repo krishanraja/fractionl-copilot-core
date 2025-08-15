@@ -19,3 +19,6 @@ enable_signup = true
 
 [functions.ai-strategic-analysis]
 verify_jwt = true
+
+[functions.google-sheets-integration]
+verify_jwt = true

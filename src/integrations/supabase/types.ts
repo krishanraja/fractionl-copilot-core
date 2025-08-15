@@ -316,6 +316,60 @@ export type Database = {
         }
         Relationships: []
       }
+      sheets_integrations: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          google_sheet_id: string | null
+          id: string
+          integration_type: string
+          last_sync_at: string | null
+          refresh_token: string | null
+          settings: Json | null
+          sheet_name: string | null
+          sync_enabled: boolean | null
+          sync_error: string | null
+          sync_status: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          google_sheet_id?: string | null
+          id?: string
+          integration_type?: string
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          settings?: Json | null
+          sheet_name?: string | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          sync_status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          google_sheet_id?: string | null
+          id?: string
+          integration_type?: string
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          settings?: Json | null
+          sheet_name?: string | null
+          sync_enabled?: boolean | null
+          sync_error?: string | null
+          sync_status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       spreadsheet_sync: {
         Row: {
           created_at: string

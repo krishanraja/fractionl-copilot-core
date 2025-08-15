@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, Brain, Target, Settings, Calendar, Zap, LogOut } from 'lucide-react';
+import { TrendingUp, TrendingDown, Brain, Target, Settings, Calendar, Zap, LogOut, Sheet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { QuickAIInsight } from './QuickAIInsight';
@@ -19,6 +19,7 @@ import { CostTracker, Cost } from './CostTracker';
 import { ProgressVisualization } from './ProgressVisualization';
 import { MotivationalHeader } from './MotivationalHeader';
 import { PipelineContent } from './PipelineContent';
+import { GoogleSheetsIntegration } from './GoogleSheetsIntegration';
 import { useTrackingData } from '@/hooks/useTrackingData';
 
 import { generateFutureMonths } from '@/utils/monthUtils';
@@ -28,7 +29,7 @@ export const Dashboard = () => {
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [costs, setCosts] = useState<Record<string, Cost[]>>({});
-  const [dashboardView, setDashboardView] = useState<'planning' | 'pipeline' | 'ai-strategy'>('pipeline');
+  const [dashboardView, setDashboardView] = useState<'planning' | 'pipeline' | 'ai-strategy' | 'sheets'>('pipeline');
   
   const availableMonths = generateFutureMonths();
 
@@ -134,6 +135,15 @@ export const Dashboard = () => {
               >
                 <Brain className="w-3 h-3 mr-1" />
                 AI Strategy
+              </Button>
+              <Button
+                variant={dashboardView === 'sheets' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDashboardView('sheets')}
+                className="text-xs"
+              >
+                <Sheet className="w-3 h-3 mr-1" />
+                Sheets
               </Button>
             </div>
             
@@ -278,6 +288,9 @@ export const Dashboard = () => {
               advisoryCustomers: monthlyGoals?.advisory_target || 0
             }}
           />
+        ) : dashboardView === 'sheets' ? (
+          /* Google Sheets Integration */
+          <GoogleSheetsIntegration selectedMonth={selectedMonth} />
         ) : null}
 
         {loading && (
