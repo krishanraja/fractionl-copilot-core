@@ -56,30 +56,17 @@ Deno.serve(async (req) => {
       console.log('Request body parsing failed, using empty object:', parseError);
     }
 
-    // Debug: Log all available environment variables
-    console.log('Available environment variables:', Object.keys(Deno.env.toObject()));
-    
-    // Debug: Check the raw secret value
+    // Parse Google OAuth credentials
     const rawCredentials = Deno.env.get('GOOGLE_OAUTH_CREDENTIALS');
-    console.log('Raw GOOGLE_OAUTH_CREDENTIALS:', rawCredentials);
-    console.log('Raw credentials type:', typeof rawCredentials);
-    console.log('Raw credentials length:', rawCredentials?.length || 'undefined');
+    if (!rawCredentials?.trim()) {
+      throw new Error('GOOGLE_OAUTH_CREDENTIALS environment variable is not set or empty');
+    }
     
-    // Try to parse credentials with better error handling
     let credentials: GoogleCredentials;
     try {
-      if (!rawCredentials) {
-        console.error('GOOGLE_OAUTH_CREDENTIALS environment variable is not set');
-        throw new Error('GOOGLE_OAUTH_CREDENTIALS environment variable is not set');
-      }
-      
       credentials = JSON.parse(rawCredentials);
-      console.log('Parsed credentials keys:', Object.keys(credentials));
-      
-      if (credentials.web) {
-        console.log('Credentials.web keys:', Object.keys(credentials.web));
-      } else {
-        console.log('No "web" object found in credentials');
+      if (!credentials.web || !credentials.web.client_id || !credentials.web.client_secret) {
+        throw new Error('Invalid credentials format: missing required web credentials');
       }
     } catch (parseError) {
       console.error('Failed to parse GOOGLE_OAUTH_CREDENTIALS:', parseError);
