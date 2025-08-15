@@ -686,7 +686,7 @@ async function autoCreateAndPopulateSheet(accessToken: string, supabase: any, us
   // Populate all data sheets
   await populateAllSheets(accessToken, sheet.spreadsheetId, supabase, userId);
   
-  return sheet.spreadsheetId;
+  return { spreadsheetId: sheet.spreadsheetId };
 }
 
 async function populateAllSheets(accessToken: string, spreadsheetId: string, supabase: any, userId: string) {
