@@ -1,9 +1,13 @@
+// FORCE DEPLOYMENT v3.0 - New deployment to pick up GOOGLE_OAUTH_CREDENTIALS secret
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// Deployment marker for debugging
+const DEPLOYMENT_VERSION = '3.0-FORCED'
 
 interface GoogleCredentials {
   web: {
@@ -52,7 +56,8 @@ Deno.serve(async (req) => {
           isValidJson,
           parseError,
           timestamp: new Date().toISOString(),
-          deploymentVersion: '2.1-fresh' // Force fresh deployment marker
+          deploymentVersion: DEPLOYMENT_VERSION,
+          message: 'Secret test endpoint - v3.0 deployment'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -94,7 +99,7 @@ Deno.serve(async (req) => {
 
     // Parse Google OAuth credentials with enhanced error reporting
     const rawCredentials = Deno.env.get('GOOGLE_OAUTH_CREDENTIALS');
-    console.log('Deployment v2.1 - Secret check:', {
+    console.log(`Deployment ${DEPLOYMENT_VERSION} - Secret check:`, {
       exists: !!rawCredentials, 
       length: rawCredentials?.length || 0,
       first10chars: rawCredentials?.substring(0, 10) || 'none'
