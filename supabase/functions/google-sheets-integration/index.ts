@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 // Deployment marker for debugging
-const DEPLOYMENT_VERSION = '3.1-FORCED-NO-AUTH-TEST'
+const DEPLOYMENT_VERSION = '3.2-AUTH-FIX'
 
 interface GoogleCredentials {
   web: {
@@ -72,14 +72,20 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      throw new Error('Invalid token');
+      return new Response(
+        JSON.stringify({ error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Authenticated user:', user.id, 'Action:', action);
