@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, Brain, Target, Settings, Calendar, Zap, LogOut, Sheet } from 'lucide-react';
+import { TrendingUp, TrendingDown, Brain, Target, Settings, Calendar, Zap, LogOut, Sheet, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { QuickAIInsight } from './QuickAIInsight';
@@ -20,8 +20,9 @@ import { ProgressVisualization } from './ProgressVisualization';
 import { MotivationalHeader } from './MotivationalHeader';
 import { PipelineContent } from './PipelineContent';
 import { GoogleSheetsIntegration } from './GoogleSheetsIntegration';
+import { CustomerToolAnalytics } from './CustomerToolAnalytics';
 import { useTrackingData } from '@/hooks/useTrackingData';
-
+import { useCustomerAnalytics } from '@/hooks/useCustomerAnalytics';
 import { generateFutureMonths } from '@/utils/monthUtils';
 
 export const Dashboard = () => {
@@ -29,7 +30,7 @@ export const Dashboard = () => {
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [costs, setCosts] = useState<Record<string, Cost[]>>({});
-  const [dashboardView, setDashboardView] = useState<'planning' | 'pipeline' | 'ai-strategy' | 'sheets'>('pipeline');
+  const [dashboardView, setDashboardView] = useState<'planning' | 'pipeline' | 'ai-strategy' | 'sheets' | 'customer-analytics'>('pipeline');
   
   const availableMonths = generateFutureMonths();
 
@@ -46,6 +47,7 @@ export const Dashboard = () => {
     updateMonthlySnapshots,
     updateDailyProgress
   } = useTrackingData(selectedMonth);
+  const { toolAnalytics, leadInsights, loading: analyticsLoading } = useCustomerAnalytics(selectedMonth);
 
   const updateCosts = (newCosts: Cost[]) => {
     setCosts(prev => ({
@@ -144,6 +146,15 @@ export const Dashboard = () => {
               >
                 <Sheet className="w-3 h-3 mr-1" />
                 Sheets
+              </Button>
+              <Button
+                variant={dashboardView === 'customer-analytics' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDashboardView('customer-analytics')}
+                className="text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Analytics
               </Button>
             </div>
             
@@ -291,6 +302,21 @@ export const Dashboard = () => {
         ) : dashboardView === 'sheets' ? (
           /* Google Sheets Integration */
           <GoogleSheetsIntegration selectedMonth={selectedMonth} />
+        ) : dashboardView === 'customer-analytics' ? (
+          /* Customer Analytics */
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Customer Tool Analytics</h2>
+              <p className="text-muted-foreground">
+                Monitor usage and performance of your 4 customer-facing AI tools
+              </p>
+            </div>
+            <CustomerToolAnalytics 
+              toolAnalytics={toolAnalytics}
+              leadInsights={leadInsights}
+              loading={analyticsLoading}
+            />
+          </div>
         ) : null}
 
         {loading && (

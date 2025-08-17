@@ -115,6 +115,111 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_journey_tracking: {
+        Row: {
+          conversion_path: string[] | null
+          created_at: string
+          customer_email: string
+          first_tool_used: string | null
+          id: string
+          journey_stage: string | null
+          last_touchpoint: string | null
+          progression_velocity: number | null
+          revenue_attribution: number | null
+          tools_used: string[] | null
+          total_engagement_time: number | null
+          touchpoints: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversion_path?: string[] | null
+          created_at?: string
+          customer_email: string
+          first_tool_used?: string | null
+          id?: string
+          journey_stage?: string | null
+          last_touchpoint?: string | null
+          progression_velocity?: number | null
+          revenue_attribution?: number | null
+          tools_used?: string[] | null
+          total_engagement_time?: number | null
+          touchpoints?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversion_path?: string[] | null
+          created_at?: string
+          customer_email?: string
+          first_tool_used?: string | null
+          id?: string
+          journey_stage?: string | null
+          last_touchpoint?: string | null
+          progression_velocity?: number | null
+          revenue_attribution?: number | null
+          tools_used?: string[] | null
+          total_engagement_time?: number | null
+          touchpoints?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customer_tool_sessions: {
+        Row: {
+          completion_percentage: number | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          id: string
+          ip_address: string | null
+          questions_asked: number | null
+          referrer_url: string | null
+          return_visit: boolean | null
+          session_duration: number | null
+          session_quality_score: number | null
+          tool_type: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          completion_percentage?: number | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          ip_address?: string | null
+          questions_asked?: number | null
+          referrer_url?: string | null
+          return_visit?: boolean | null
+          session_duration?: number | null
+          session_quality_score?: number | null
+          tool_type: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          completion_percentage?: number | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          ip_address?: string | null
+          questions_asked?: number | null
+          referrer_url?: string | null
+          return_visit?: boolean | null
+          session_duration?: number | null
+          session_quality_score?: number | null
+          tool_type?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_progress: {
         Row: {
           advisory_progress: number | null
@@ -154,6 +259,105 @@ export type Database = {
           updated_at?: string
           user_id?: string
           workshops_progress?: number | null
+        }
+        Relationships: []
+      }
+      engagement_analytics: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value: number
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lead_scoring: {
+        Row: {
+          actual_value: number | null
+          consultation_booked: boolean | null
+          conversion_date: string | null
+          conversion_probability: number | null
+          converted_to_paid: boolean | null
+          created_at: string
+          cross_tool_usage_count: number | null
+          customer_email: string
+          customer_name: string | null
+          engagement_score: number | null
+          estimated_value: number | null
+          id: string
+          last_interaction: string | null
+          lead_source: string
+          lead_temperature: string | null
+          notes: string | null
+          seminar_attended: boolean | null
+          tool_usage_frequency: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_value?: number | null
+          consultation_booked?: boolean | null
+          conversion_date?: string | null
+          conversion_probability?: number | null
+          converted_to_paid?: boolean | null
+          created_at?: string
+          cross_tool_usage_count?: number | null
+          customer_email: string
+          customer_name?: string | null
+          engagement_score?: number | null
+          estimated_value?: number | null
+          id?: string
+          last_interaction?: string | null
+          lead_source: string
+          lead_temperature?: string | null
+          notes?: string | null
+          seminar_attended?: boolean | null
+          tool_usage_frequency?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_value?: number | null
+          consultation_booked?: boolean | null
+          conversion_date?: string | null
+          conversion_probability?: number | null
+          converted_to_paid?: boolean | null
+          created_at?: string
+          cross_tool_usage_count?: number | null
+          customer_email?: string
+          customer_name?: string | null
+          engagement_score?: number | null
+          estimated_value?: number | null
+          id?: string
+          last_interaction?: string | null
+          lead_source?: string
+          lead_temperature?: string | null
+          notes?: string | null
+          seminar_attended?: boolean | null
+          tool_usage_frequency?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -416,6 +620,63 @@ export type Database = {
           sync_error?: string | null
           sync_frequency?: string | null
           sync_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tool_performance_metrics: {
+        Row: {
+          avg_completion_rate: number | null
+          avg_session_duration: number | null
+          consultation_bookings: number | null
+          conversion_rate: number | null
+          created_at: string
+          customer_acquisition_cost: number | null
+          date: string
+          id: string
+          qualified_leads: number | null
+          revenue_attributed: number | null
+          tool_type: string
+          total_leads_generated: number | null
+          total_sessions: number | null
+          unique_visitors: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_completion_rate?: number | null
+          avg_session_duration?: number | null
+          consultation_bookings?: number | null
+          conversion_rate?: number | null
+          created_at?: string
+          customer_acquisition_cost?: number | null
+          date?: string
+          id?: string
+          qualified_leads?: number | null
+          revenue_attributed?: number | null
+          tool_type: string
+          total_leads_generated?: number | null
+          total_sessions?: number | null
+          unique_visitors?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_completion_rate?: number | null
+          avg_session_duration?: number | null
+          consultation_bookings?: number | null
+          conversion_rate?: number | null
+          created_at?: string
+          customer_acquisition_cost?: number | null
+          date?: string
+          id?: string
+          qualified_leads?: number | null
+          revenue_attributed?: number | null
+          tool_type?: string
+          total_leads_generated?: number | null
+          total_sessions?: number | null
+          unique_visitors?: number | null
           updated_at?: string
           user_id?: string
         }
