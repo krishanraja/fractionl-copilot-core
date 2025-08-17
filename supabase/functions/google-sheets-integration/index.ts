@@ -396,7 +396,7 @@ async function handleCreateSheet(body: any, supabase: any, userId: string) {
 
   const sheetData = {
     properties: {
-      title: body.title || 'Business Tracker Data',
+      title: body.title || 'Fractionl AI: Copilot',
     },
     sheets: [
       { properties: { title: 'Monthly Goals' } },
@@ -708,7 +708,7 @@ async function autoCreateAndPopulateSheet(accessToken: string, supabase: any, us
   // Create the spreadsheet with comprehensive structure
   const sheetData = {
     properties: {
-      title: `Business Tracker - ${new Date().getFullYear()}`,
+      title: `Fractionl AI: Copilot`,
     },
     sheets: [
       { properties: { title: 'Summary Dashboard', index: 0 } },
