@@ -84,19 +84,20 @@ export const Dashboard = () => {
         <div className="container-width">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-                  <Brain className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <img 
-                    src="/lovable-uploads/30f9efde-5245-4c24-b26e-1e368f4a5a1b.png" 
-                    alt="Fractionl.ai Logo" 
-                    className="h-8 w-auto"
-                  />
-                  <p className="text-muted-foreground text-sm">AI Business Intelligence</p>
-                </div>
-              </div>
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-purple"
+                 style={{ background: "var(--gradient-primary)" }}>
+              <Brain className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <div>
+              <img 
+                src="/lovable-uploads/30f9efde-5245-4c24-b26e-1e368f4a5a1b.png" 
+                alt="Fractionl.ai Logo" 
+                className="h-8 w-auto"
+              />
+              <p className="text-foreground-secondary text-sm font-body">AI Business Intelligence</p>
+            </div>
+          </div>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -114,12 +115,12 @@ export const Dashboard = () => {
               </Select>
               
               {/* NYC Editorial Navigation */}
-              <nav className="flex items-center bg-secondary/50 rounded-xl p-1 glass">
+              <nav className="flex items-center bg-secondary/50 rounded-2xl p-1 glass">
                 <Button
                   variant={dashboardView === 'pipeline' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardView('pipeline')}
-                  className="text-sm font-medium transition-all"
+                  className="text-sm font-heading transition-smooth hover-scale rounded-xl"
                 >
                   <Zap className="w-4 h-4 mr-2" />
                   Pipeline
@@ -128,7 +129,7 @@ export const Dashboard = () => {
                   variant={dashboardView === 'planning' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardView('planning')}
-                  className="text-sm font-medium transition-all"
+                  className="text-sm font-heading transition-smooth hover-scale rounded-xl"
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Planning
@@ -137,7 +138,7 @@ export const Dashboard = () => {
                   variant={dashboardView === 'ai-strategy' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardView('ai-strategy')}
-                  className="text-sm font-medium transition-all"
+                  className="text-sm font-heading transition-smooth hover-scale rounded-xl"
                 >
                   <Brain className="w-4 h-4 mr-2" />
                   AI Strategy
@@ -146,7 +147,7 @@ export const Dashboard = () => {
                   variant={dashboardView === 'sheets' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardView('sheets')}
-                  className="text-sm font-medium transition-all"
+                  className="text-sm font-heading transition-smooth hover-scale rounded-xl"
                 >
                   <Sheet className="w-4 h-4 mr-2" />
                   Sheets
@@ -155,7 +156,7 @@ export const Dashboard = () => {
                   variant={dashboardView === 'customer-analytics' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardView('customer-analytics')}
-                  className="text-sm font-medium transition-all"
+                  className="text-sm font-heading transition-smooth hover-scale rounded-xl"
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Analytics
@@ -238,58 +239,61 @@ export const Dashboard = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Card className="card-hover border-0 shadow-sm glass">
+                    <Card className="hover-lift rounded-3xl bg-surface shadow-sm">
                       <CardHeader className="pb-4">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="p-2 rounded-lg bg-primary/10">
-                            <Target className="w-5 h-5 text-primary" />
+                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-purple"
+                               style={{ background: "var(--gradient-primary)" }}>
+                            <Target className="w-6 h-6 text-primary-foreground" />
                           </div>
-                          <CardTitle className="text-xl font-semibold">Revenue Target</CardTitle>
+                          <CardTitle className="text-xl font-heading">Revenue Target</CardTitle>
                         </div>
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold text-primary mb-2">
                           ${(monthlyGoals?.revenue_forecast || 0).toLocaleString()}
                         </div>
-                        <p className="text-muted-foreground">Monthly Goal</p>
+                        <p className="text-foreground-secondary font-body">Monthly Goal</p>
                       </CardContent>
                     </Card>
                     
-                    <Card className="card-hover border-0 shadow-sm glass">
+                    <Card className="hover-lift rounded-3xl bg-surface shadow-sm">
                       <CardHeader className="pb-4">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="p-2 rounded-lg bg-warning/10">
-                            <TrendingDown className="w-5 h-5 text-warning" />
+                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-purple"
+                               style={{ background: "hsl(var(--warning))" }}>
+                            <TrendingDown className="w-6 h-6 text-white" />
                           </div>
-                          <CardTitle className="text-xl font-semibold">Cost Budget</CardTitle>
+                          <CardTitle className="text-xl font-heading">Cost Budget</CardTitle>
                         </div>
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-bold text-warning mb-2">
                           ${(monthlyGoals?.cost_budget || 0).toLocaleString()}
                         </div>
-                        <p className="text-muted-foreground">Monthly Budget</p>
+                        <p className="text-foreground-secondary font-body">Monthly Budget</p>
                       </CardContent>
                     </Card>
                     
-                    <Card className="card-hover border-0 shadow-sm glass">
+                    <Card className="hover-lift rounded-3xl bg-surface shadow-sm">
                       <CardHeader className="pb-4">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className={`p-2 rounded-lg ${netProfit >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-purple`}
+                               style={{ background: netProfit >= 0 ? "hsl(var(--success))" : "hsl(var(--destructive))" }}>
                             {netProfit >= 0 ? (
-                              <TrendingUp className="w-5 h-5 text-success" />
+                              <TrendingUp className="w-6 h-6 text-white" />
                             ) : (
-                              <TrendingDown className="w-5 h-5 text-destructive" />
+                              <TrendingDown className="w-6 h-6 text-white" />
                             )}
                           </div>
-                          <CardTitle className="text-xl font-semibold">Net Profit</CardTitle>
+                          <CardTitle className="text-xl font-heading">Net Profit</CardTitle>
                         </div>
                       </CardHeader>
                       <CardContent>
                         <div className={`text-3xl font-bold mb-2 ${netProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
                           ${netProfit.toLocaleString()}
                         </div>
-                        <p className="text-muted-foreground">
+                        <p className="text-foreground-secondary font-body">
                           {profitMargin.toFixed(1)}% margin
                         </p>
                       </CardContent>
