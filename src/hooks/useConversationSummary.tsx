@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+
+export interface SummaryOperationResult {
+  success: boolean;
+  error?: string;
+  summary?: string;
+}
 
 export const useConversationSummary = () => {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [lastResult, setLastResult] = useState<SummaryOperationResult | null>(null);
   const { user } = useAuth();
-  const { toast } = useToast();
 
-  const generateSummary = async (sessionId: string, messages: any[]) => {
-    if (!user || messages.length < 4) return null; // Need at least 4 messages for a summary
+  const generateSummary = async (sessionId: string, messages: any[]): Promise<SummaryOperationResult> => {
+    if (!user || messages.length < 4) {
+      return { success: false, error: 'Need at least 4 messages for a summary' };
+    }
 
     setIsGeneratingSummary(true);
     try {
@@ -17,7 +24,9 @@ export const useConversationSummary = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session?.access_token) {
-        throw new Error('Authentication required');
+        const result = { success: false, error: 'Authentication required' };
+        setLastResult(result);
+        return result;
       }
 
       const conversationText = messages
@@ -60,24 +69,20 @@ export const useConversationSummary = () => {
 
       if (historyError) throw historyError;
 
-      toast({
-        title: "Conversation summarized",
-        description: "Your chat has been saved to Analysis History.",
-      });
-
-      return summary;
+      const result = { success: true, summary };
+      setLastResult(result);
+      return result;
     } catch (error) {
       console.error('Error generating summary:', error);
-      toast({
-        title: "Error creating summary",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-      return null;
+      const result = { success: false, error: 'Failed to create summary' };
+      setLastResult(result);
+      return result;
     } finally {
       setIsGeneratingSummary(false);
     }
   };
 
-  return { generateSummary, isGeneratingSummary };
+  const clearLastResult = () => setLastResult(null);
+
+  return { generateSummary, isGeneratingSummary, lastResult, clearLastResult };
 };
