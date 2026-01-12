@@ -1,19 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Opportunity } from '@/types/tracking';
-import { toast } from '@/hooks/use-toast';
 import { useAuth } from './useAuth';
+
+export interface OpportunityOperationResult {
+  success: boolean;
+  error?: string;
+  data?: Opportunity;
+}
 
 export const useOpportunityData = (selectedMonth: string) => {
   const { user } = useAuth();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastError, setLastError] = useState<string | null>(null);
 
-  const loadOpportunities = async () => {
+  const loadOpportunities = useCallback(async () => {
     if (!user) return;
     
     try {
       setLoading(true);
+      setLastError(null);
       const { data, error } = await supabase
         .from('opportunities')
         .select('*')
@@ -22,32 +29,24 @@ export const useOpportunityData = (selectedMonth: string) => {
 
       if (error) {
         console.error('Error loading opportunities:', error);
-        toast({
-          title: "Error loading opportunities",
-          description: error.message,
-          variant: "destructive",
-        });
+        setLastError(error.message);
       } else {
         setOpportunities((data || []) as Opportunity[]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading opportunities:', error);
-      toast({
-        title: "Error loading opportunities",
-        description: "Failed to load opportunity data",
-        variant: "destructive",
-      });
+      setLastError('Failed to load opportunity data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, selectedMonth]);
 
-  const createOpportunity = async (opportunityData: Partial<Opportunity>) => {
-    if (!user) return;
+  const createOpportunity = useCallback(async (opportunityData: Partial<Opportunity>): Promise<OpportunityOperationResult> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
     
     try {
       if (!opportunityData.title || !opportunityData.type) {
-        throw new Error('Title and type are required');
+        return { success: false, error: 'Title and type are required' };
       }
       
       const { data, error } = await supabase
@@ -64,30 +63,19 @@ export const useOpportunityData = (selectedMonth: string) => {
 
       if (error) {
         console.error('Error creating opportunity:', error);
-        toast({
-          title: "Error creating opportunity",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        setOpportunities(prev => [data as Opportunity, ...prev]);
-        toast({
-          title: "Opportunity created",
-          description: "New opportunity added to pipeline",
-        });
+        return { success: false, error: error.message };
       }
-    } catch (error) {
+      
+      setOpportunities(prev => [data as Opportunity, ...prev]);
+      return { success: true, data: data as Opportunity };
+    } catch (error: any) {
       console.error('Error creating opportunity:', error);
-      toast({
-        title: "Error creating opportunity",
-        description: "Failed to create opportunity",
-        variant: "destructive",
-      });
+      return { success: false, error: 'Failed to create opportunity' };
     }
-  };
+  }, [user, selectedMonth]);
 
-  const updateOpportunity = async (id: string, updates: Partial<Opportunity>) => {
-    if (!user) return;
+  const updateOpportunity = useCallback(async (id: string, updates: Partial<Opportunity>): Promise<OpportunityOperationResult> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
     
     try {
       const { data, error } = await supabase
@@ -99,32 +87,21 @@ export const useOpportunityData = (selectedMonth: string) => {
 
       if (error) {
         console.error('Error updating opportunity:', error);
-        toast({
-          title: "Error updating opportunity",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        setOpportunities(prev => 
-          prev.map(opp => opp.id === id ? data as Opportunity : opp)
-        );
-        toast({
-          title: "Opportunity updated",
-          description: "Opportunity details have been saved",
-        });
+        return { success: false, error: error.message };
       }
-    } catch (error) {
+      
+      setOpportunities(prev => 
+        prev.map(opp => opp.id === id ? data as Opportunity : opp)
+      );
+      return { success: true, data: data as Opportunity };
+    } catch (error: any) {
       console.error('Error updating opportunity:', error);
-      toast({
-        title: "Error updating opportunity",
-        description: "Failed to update opportunity",
-        variant: "destructive",
-      });
+      return { success: false, error: 'Failed to update opportunity' };
     }
-  };
+  }, [user]);
 
-  const deleteOpportunity = async (id: string) => {
-    if (!user) return;
+  const deleteOpportunity = useCallback(async (id: string): Promise<OpportunityOperationResult> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
     
     try {
       const { error } = await supabase
@@ -134,37 +111,27 @@ export const useOpportunityData = (selectedMonth: string) => {
 
       if (error) {
         console.error('Error deleting opportunity:', error);
-        toast({
-          title: "Error deleting opportunity",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        setOpportunities(prev => prev.filter(opp => opp.id !== id));
-        toast({
-          title: "Opportunity deleted",
-          description: "Opportunity removed from pipeline",
-        });
+        return { success: false, error: error.message };
       }
-    } catch (error) {
+      
+      setOpportunities(prev => prev.filter(opp => opp.id !== id));
+      return { success: true };
+    } catch (error: any) {
       console.error('Error deleting opportunity:', error);
-      toast({
-        title: "Error deleting opportunity",
-        description: "Failed to delete opportunity",
-        variant: "destructive",
-      });
+      return { success: false, error: 'Failed to delete opportunity' };
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
       loadOpportunities();
     }
-  }, [selectedMonth, user]);
+  }, [loadOpportunities]);
 
   return {
     opportunities,
     loading,
+    lastError,
     createOpportunity,
     updateOpportunity,
     deleteOpportunity,

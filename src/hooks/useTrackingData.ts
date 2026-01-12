@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from './useAuth';
 import { 
   MonthlyGoals, 
@@ -88,6 +87,11 @@ const METRIC_CONFIGS: MetricConfig[] = [
   }
 ];
 
+export interface TrackingOperationResult {
+  success: boolean;
+  error?: string;
+}
+
 export const useTrackingData = (selectedMonth: string) => {
   const { user } = useAuth();
   const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoals | null>(null);
@@ -95,6 +99,7 @@ export const useTrackingData = (selectedMonth: string) => {
   const [dailyProgress, setDailyProgress] = useState<DailyProgress[]>([]);
   const [todaysProgress, setTodaysProgress] = useState<DailyProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastError, setLastError] = useState<string | null>(null);
   
   // Generate future months for selection (current + next 12)
   const generateFutureMonths = () => {
@@ -112,7 +117,6 @@ export const useTrackingData = (selectedMonth: string) => {
 
   // Available months for selection (current + next 12)
   const availableMonths = useMemo(() => generateFutureMonths(), []);
-  const { toast } = useToast();
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -127,6 +131,7 @@ export const useTrackingData = (selectedMonth: string) => {
     if (!user) return;
     
     setLoading(true);
+    setLastError(null);
     try {
       // Load monthly goals
       const { data: goalsData, error: goalsError } = await supabase
@@ -174,11 +179,7 @@ export const useTrackingData = (selectedMonth: string) => {
       setTodaysProgress(todayData);
     } catch (error) {
       console.error('Error loading tracking data:', error);
-      toast({
-        title: "Error loading data",
-        description: "Failed to load tracking data from database.",
-        variant: "destructive",
-      });
+      setLastError('Failed to load tracking data');
     } finally {
       setLoading(false);
     }
@@ -259,9 +260,9 @@ export const useTrackingData = (selectedMonth: string) => {
     });
   }, [monthlyGoals, monthlySnapshots, dailyProgress, selectedMonth]);
 
-  // Update monthly goals
-  const updateMonthlyGoals = async (updates: Partial<MonthlyGoals>) => {
-    if (!user) return;
+  // Update monthly goals - returns result instead of showing toast
+  const updateMonthlyGoals = useCallback(async (updates: Partial<MonthlyGoals>): Promise<TrackingOperationResult> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
     
     try {
       const { data, error } = await supabase
@@ -279,24 +280,16 @@ export const useTrackingData = (selectedMonth: string) => {
 
       if (error) throw error;
       setMonthlyGoals(data);
-      
-      toast({
-        title: "Goals updated",
-        description: "Monthly goals have been saved successfully.",
-      });
+      return { success: true };
     } catch (error) {
       console.error('Error updating monthly goals:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update monthly goals.",
-        variant: "destructive",
-      });
+      return { success: false, error: 'Failed to update goals' };
     }
-  };
+  }, [user, selectedMonth, monthlyGoals]);
 
-  // Update monthly snapshots
-  const updateMonthlySnapshots = async (updates: Partial<MonthlySnapshots>) => {
-    if (!user) return;
+  // Update monthly snapshots - returns result instead of showing toast
+  const updateMonthlySnapshots = useCallback(async (updates: Partial<MonthlySnapshots>): Promise<TrackingOperationResult> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
     
     try {
       const { data, error } = await supabase
@@ -314,24 +307,16 @@ export const useTrackingData = (selectedMonth: string) => {
 
       if (error) throw error;
       setMonthlySnapshots(data);
-      
-      toast({
-        title: "Current state updated",
-        description: "Monthly snapshots have been saved successfully.",
-      });
+      return { success: true };
     } catch (error) {
       console.error('Error updating monthly snapshots:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update monthly snapshots.",
-        variant: "destructive",
-      });
+      return { success: false, error: 'Failed to update snapshots' };
     }
-  };
+  }, [user, selectedMonth, monthlySnapshots]);
 
-  // Update daily progress
-  const updateDailyProgress = async (updates: Partial<DailyProgress>) => {
-    if (!user) return;
+  // Update daily progress - returns result instead of showing toast
+  const updateDailyProgress = useCallback(async (updates: Partial<DailyProgress>): Promise<TrackingOperationResult> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
     
     try {
       const { data, error } = await supabase
@@ -353,20 +338,12 @@ export const useTrackingData = (selectedMonth: string) => {
       
       // Reload daily progress to update totals
       await loadTrackingData();
-      
-      toast({
-        title: "Progress updated",
-        description: "Daily progress has been saved successfully.",
-      });
+      return { success: true };
     } catch (error) {
       console.error('Error updating daily progress:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update daily progress.",
-        variant: "destructive",
-      });
+      return { success: false, error: 'Failed to update progress' };
     }
-  };
+  }, [user, selectedMonth, todaysProgress, today]);
 
   // Calculate overall score
   const overallScore = useMemo(() => {
@@ -383,6 +360,7 @@ export const useTrackingData = (selectedMonth: string) => {
     metricsProgress,
     overallScore,
     loading,
+    lastError,
     updateMonthlyGoals,
     updateMonthlySnapshots,
     updateDailyProgress,

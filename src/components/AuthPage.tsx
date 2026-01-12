@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Lock, Mail } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { ErrorBanner } from '@/components/feedback';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuthPageProps {
   onAuthenticated: () => void;
@@ -16,10 +17,18 @@ export const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const clearMessages = () => {
+    setError(null);
+    setSuccessMessage(null);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    clearMessages();
     
     try {
       const { error } = await supabase.auth.signUp({
@@ -31,23 +40,12 @@ export const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
       });
 
       if (error) {
-        toast({
-          title: "Sign up failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        setError({ title: 'Sign up failed', message: error.message });
       } else {
-        toast({
-          title: "Check your email",
-          description: "Please check your email to confirm your account",
-        });
+        setSuccessMessage('Check your email to confirm your account');
       }
     } catch (error) {
-      toast({
-        title: "Sign up failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      setError({ title: 'Sign up failed', message: 'An unexpected error occurred' });
     } finally {
       setLoading(false);
     }
@@ -56,6 +54,7 @@ export const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    clearMessages();
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -64,20 +63,12 @@ export const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
       });
 
       if (error) {
-        toast({
-          title: "Sign in failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        setError({ title: 'Sign in failed', message: error.message });
       } else {
         onAuthenticated();
       }
     } catch (error) {
-      toast({
-        title: "Sign in failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      setError({ title: 'Sign in failed', message: 'An unexpected error occurred' });
     } finally {
       setLoading(false);
     }
@@ -95,8 +86,30 @@ export const AuthPage = ({ onAuthenticated }: AuthPageProps) => {
             Sign in to access your secure business dashboard
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+        <CardContent className="space-y-4">
+          {/* Success message */}
+          <AnimatePresence>
+            {successMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm text-center"
+              >
+                {successMessage}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Error banner */}
+          <ErrorBanner
+            show={!!error}
+            title={error?.title || ''}
+            message={error?.message}
+            onDismiss={() => setError(null)}
+          />
+
+          <Tabs defaultValue="signin" className="w-full" onValueChange={clearMessages}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>

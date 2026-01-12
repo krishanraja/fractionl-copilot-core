@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { toast } from '@/hooks/use-toast';
 
 export interface UserInsight {
   id: string;
@@ -29,12 +28,19 @@ interface UseUserInsightsOptions {
   limit?: number;
 }
 
+export interface InsightOperationResult {
+  success: boolean;
+  error?: string;
+  data?: any;
+}
+
 export function useUserInsights(options: UseUserInsightsOptions = {}) {
   const { user } = useAuth();
   const [insights, setInsights] = useState<UserInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [lastOperationResult, setLastOperationResult] = useState<InsightOperationResult | null>(null);
 
   const fetchInsights = useCallback(async () => {
     if (!user?.id) {
@@ -125,8 +131,8 @@ export function useUserInsights(options: UseUserInsightsOptions = {}) {
     };
   }, [user?.id, fetchInsights]);
 
-  const dismissInsight = useCallback(async (insightId: string) => {
-    if (!user?.id) return;
+  const dismissInsight = useCallback(async (insightId: string): Promise<InsightOperationResult> => {
+    if (!user?.id) return { success: false, error: 'Not authenticated' };
 
     try {
       const { error: updateError } = await supabase
@@ -141,23 +147,19 @@ export function useUserInsights(options: UseUserInsightsOptions = {}) {
       if (updateError) throw updateError;
 
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
-      
-      toast({
-        title: 'Insight dismissed',
-        description: 'This insight has been removed from your feed.',
-      });
+      const result = { success: true };
+      setLastOperationResult(result);
+      return result;
     } catch (err) {
       console.error('Error dismissing insight:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to dismiss insight',
-        variant: 'destructive',
-      });
+      const result = { success: false, error: 'Failed to dismiss insight' };
+      setLastOperationResult(result);
+      return result;
     }
   }, [user?.id]);
 
-  const actionInsight = useCallback(async (insightId: string) => {
-    if (!user?.id) return;
+  const actionInsight = useCallback(async (insightId: string): Promise<InsightOperationResult> => {
+    if (!user?.id) return { success: false, error: 'Not authenticated' };
 
     try {
       const { error: updateError } = await supabase
@@ -172,30 +174,26 @@ export function useUserInsights(options: UseUserInsightsOptions = {}) {
       if (updateError) throw updateError;
 
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
-      
-      toast({
-        title: 'Great work! 🎉',
-        description: 'Insight marked as actioned.',
-      });
+      const result = { success: true };
+      setLastOperationResult(result);
+      return result;
     } catch (err) {
       console.error('Error actioning insight:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to mark insight as actioned',
-        variant: 'destructive',
-      });
+      const result = { success: false, error: 'Failed to mark insight as actioned' };
+      setLastOperationResult(result);
+      return result;
     }
   }, [user?.id]);
 
-  const generateInsights = useCallback(async () => {
-    if (!user?.id) return;
+  const generateInsights = useCallback(async (): Promise<InsightOperationResult> => {
+    if (!user?.id) return { success: false, error: 'Not authenticated' };
 
     try {
       setGenerating(true);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        throw new Error('No active session');
+        return { success: false, error: 'No active session' };
       }
 
       const { data, error: invokeError } = await supabase.functions.invoke('generate-user-insights', {
@@ -207,26 +205,20 @@ export function useUserInsights(options: UseUserInsightsOptions = {}) {
       if (invokeError) throw invokeError;
 
       if (data?.insights?.length > 0) {
-        toast({
-          title: 'New insights generated! ✨',
-          description: `${data.insights.length} personalized insights are ready.`,
-        });
         await fetchInsights();
+        const result = { success: true, data: { count: data.insights.length } };
+        setLastOperationResult(result);
+        return result;
       } else {
-        toast({
-          title: 'Analysis complete',
-          description: 'No new insights at this time. Keep using the app!',
-        });
+        const result = { success: true, data: { count: 0 } };
+        setLastOperationResult(result);
+        return result;
       }
-
-      return data;
     } catch (err) {
       console.error('Error generating insights:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to generate insights. Please try again.',
-        variant: 'destructive',
-      });
+      const result = { success: false, error: 'Failed to generate insights' };
+      setLastOperationResult(result);
+      return result;
     } finally {
       setGenerating(false);
     }
@@ -240,17 +232,23 @@ export function useUserInsights(options: UseUserInsightsOptions = {}) {
     return insights.filter((i) => i.category === category);
   }, [insights]);
 
+  const clearLastOperationResult = useCallback(() => {
+    setLastOperationResult(null);
+  }, []);
+
   return {
     insights,
     loading,
     error,
     generating,
+    lastOperationResult,
     fetchInsights,
     dismissInsight,
     actionInsight,
     generateInsights,
     getHighPriorityInsights,
     getInsightsByCategory,
+    clearLastOperationResult,
     hasInsights: insights.length > 0,
     highPriorityCount: insights.filter((i) => i.priority === 'high').length,
   };

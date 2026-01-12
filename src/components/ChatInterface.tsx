@@ -5,10 +5,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Send, Loader2, MessageSquare, Plus, History } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversationSummary } from '@/hooks/useConversationSummary';
+import { ErrorBanner } from '@/components/feedback';
+import { InlineSuccess } from '@/components/feedback/InlineSuccess';
 
 interface Message {
   id: string;
@@ -28,7 +29,8 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [showSummarySaved, setShowSummarySaved] = useState(false);
   const { user } = useAuth();
   const { generateSummary, isGeneratingSummary } = useConversationSummary();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -48,6 +50,7 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
 
   const createNewSession = async () => {
     if (!user) return;
+    setError(null);
 
     try {
       const { data, error } = await supabase
@@ -75,16 +78,23 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
       setMessages([welcomeMessage]);
     } catch (error) {
       console.error('Error creating session:', error);
-      toast({
-        title: "Error creating chat session",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      setError({ title: 'Session Error', message: 'Failed to create chat session. Please try again.' });
+    }
+  };
+
+  const handleSaveSummary = async () => {
+    if (!currentSessionId) return;
+    const result = await generateSummary(currentSessionId, messages);
+    if (result.success) {
+      setShowSummarySaved(true);
+    } else {
+      setError({ title: 'Summary Error', message: result.error || 'Failed to save summary' });
     }
   };
 
   const sendMessage = async () => {
     if (!currentMessage.trim() || !currentSessionId || !user) return;
+    setError(null);
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -113,21 +123,13 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
       
       if (sessionError) {
         console.error('Session error:', sessionError);
-        toast({
-          title: "Authentication Error",
-          description: "Session validation failed. Please refresh the page and try again.",
-          variant: "destructive",
-        });
+        setError({ title: 'Authentication Error', message: 'Session validation failed. Please refresh the page.' });
         return;
       }
       
       if (!session || !session.access_token) {
         console.error('No valid session or access token found');
-        toast({
-          title: "Authentication Required",
-          description: "Please refresh the page and log in again.",
-          variant: "destructive",
-        });
+        setError({ title: 'Authentication Required', message: 'Please refresh the page and log in again.' });
         return;
       }
 
@@ -139,11 +141,7 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
         const { error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError) {
           console.error('Token refresh failed:', refreshError);
-          toast({
-            title: "Session Expired",
-            description: "Please refresh the page and log in again.",
-            variant: "destructive",
-          });
+          setError({ title: 'Session Expired', message: 'Please refresh the page and log in again.' });
           return;
         }
       }
@@ -168,20 +166,12 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
         console.error('Strategic AI function error:', error);
         
         if (error.message?.includes('Token expired') || error.message?.includes('session has expired')) {
-          toast({
-            title: "Session Expired",
-            description: "Your session has expired. Please refresh the page and log in again.",
-            variant: "destructive",
-          });
+          setError({ title: 'Session Expired', message: 'Your session has expired. Please refresh the page.' });
           return;
         }
         
         if (error.message?.includes('Authentication') || error.message?.includes('401') || error.message?.includes('Authorization')) {
-          toast({
-            title: "Authentication Error",
-            description: "Authentication failed. Please refresh the page and try again.",
-            variant: "destructive",
-          });
+          setError({ title: 'Authentication Error', message: 'Authentication failed. Please refresh the page.' });
           return;
         }
         
@@ -208,28 +198,16 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
           role: 'assistant'
         });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
       const errorMessage = error.message || 'An unexpected error occurred';
       
       if (errorMessage.includes('OpenAI') || errorMessage.includes('API key')) {
-        toast({
-          title: "AI Service Issue",
-          description: "The AI service configuration needs attention. Please contact support.",
-          variant: "destructive",
-        });
+        setError({ title: 'AI Service Issue', message: 'The AI service configuration needs attention.' });
       } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-        toast({
-          title: "Connection Error",
-          description: "Please check your internet connection and try again.",
-          variant: "destructive",
-        });
+        setError({ title: 'Connection Error', message: 'Please check your internet connection.' });
       } else {
-        toast({
-          title: "Error sending message",
-          description: "Please try again in a moment.",
-          variant: "destructive",
-        });
+        setError({ title: 'Message Error', message: 'Failed to send message. Please try again.' });
       }
     } finally {
       setIsLoading(false);
@@ -262,26 +240,42 @@ export const ChatInterface = ({ currentMetrics, monthlyGoals, businessContext }:
               New Chat
             </Button>
             {messages.length > 4 && currentSessionId && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => generateSummary(currentSessionId, messages)}
-                disabled={isGeneratingSummary}
-                className="flex items-center gap-2"
-              >
-                {isGeneratingSummary ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <History className="h-4 w-4" />
-                )}
-                Save Summary
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveSummary}
+                  disabled={isGeneratingSummary}
+                  className="flex items-center gap-2"
+                >
+                  {isGeneratingSummary ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <History className="h-4 w-4" />
+                  )}
+                  Save Summary
+                </Button>
+                <InlineSuccess show={showSummarySaved} message="Saved!" onComplete={() => setShowSummarySaved(false)} />
+              </div>
             )}
           </div>
         </div>
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">
+        {/* Error banner at top of chat */}
+        {error && (
+          <div className="px-4 pt-4">
+            <ErrorBanner
+              show={!!error}
+              title={error.title}
+              message={error.message}
+              onDismiss={() => setError(null)}
+              onRetry={error.title === 'Message Error' ? sendMessage : undefined}
+            />
+          </div>
+        )}
+        
         <ScrollArea ref={scrollAreaRef} className="flex-1 px-4">
           <div className="space-y-2 py-4">
             {messages.map((message) => (
