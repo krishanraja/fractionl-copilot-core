@@ -7,22 +7,26 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { AuthPage } from "./components/AuthPage";
+import { OnboardingWizard } from "./components/onboarding/OnboardingWizard";
+import { useUserProfile } from "./hooks/useUserProfile";
+import { PageLoader } from "./components/ui/loading-spinner";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading, needsOnboarding, refetch } = useUserProfile();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (authLoading || (user && profileLoading)) {
+    return <PageLoader message="Loading your workspace..." />;
   }
 
   if (!user) {
     return <AuthPage onAuthenticated={() => {}} />;
+  }
+
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={refetch} />;
   }
 
   return (
