@@ -292,6 +292,45 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_usage: {
+        Row: {
+          avg_time_spent_seconds: number | null
+          completion_rate: number | null
+          created_at: string
+          feature_key: string
+          first_used_at: string | null
+          id: string
+          last_used_at: string | null
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          avg_time_spent_seconds?: number | null
+          completion_rate?: number | null
+          created_at?: string
+          feature_key: string
+          first_used_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          avg_time_spent_seconds?: number | null
+          completion_rate?: number | null
+          created_at?: string
+          feature_key?: string
+          first_used_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       lead_scoring: {
         Row: {
           actual_value: number | null
@@ -682,6 +721,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_behavior_logs: {
+        Row: {
+          component_name: string | null
+          created_at: string
+          device_type: string | null
+          event_action: string
+          event_category: string
+          event_label: string | null
+          event_type: string
+          event_value: number | null
+          id: string
+          metadata: Json | null
+          page_path: string | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          component_name?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_action: string
+          event_category: string
+          event_label?: string | null
+          event_type: string
+          event_value?: number | null
+          id?: string
+          metadata?: Json | null
+          page_path?: string | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          component_name?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_action?: string
+          event_category?: string
+          event_label?: string | null
+          event_type?: string
+          event_value?: number | null
+          id?: string
+          metadata?: Json | null
+          page_path?: string | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_business_context: {
         Row: {
           business_type: string | null
@@ -714,6 +801,255 @@ export type Database = {
           priorities?: string[] | null
           target_market?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_insights: {
+        Row: {
+          actioned_at: string | null
+          category: string
+          confidence_score: number | null
+          created_at: string
+          description: string
+          dismissed_at: string | null
+          expires_at: string | null
+          id: string
+          insight_type: string
+          priority: string | null
+          status: string | null
+          suggested_actions: Json | null
+          supporting_data: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actioned_at?: string | null
+          category: string
+          confidence_score?: number | null
+          created_at?: string
+          description: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          insight_type: string
+          priority?: string | null
+          status?: string | null
+          suggested_actions?: Json | null
+          supporting_data?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actioned_at?: string | null
+          category?: string
+          confidence_score?: number | null
+          created_at?: string
+          description?: string
+          dismissed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          priority?: string | null
+          status?: string | null
+          suggested_actions?: Json | null
+          supporting_data?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          accent_color: string | null
+          ai_auto_insights: boolean | null
+          ai_personality: string | null
+          ai_proactive_suggestions: boolean | null
+          animations_enabled: boolean | null
+          browser_notifications: boolean | null
+          compact_mode: boolean | null
+          created_at: string
+          daily_digest: boolean | null
+          default_view: string | null
+          email_notifications: boolean | null
+          favorite_metrics: string[] | null
+          goal_reminders: boolean | null
+          hidden_sections: string[] | null
+          id: string
+          sidebar_collapsed: boolean | null
+          theme: string | null
+          updated_at: string
+          user_id: string
+          weekly_summary: boolean | null
+          widget_order: Json | null
+        }
+        Insert: {
+          accent_color?: string | null
+          ai_auto_insights?: boolean | null
+          ai_personality?: string | null
+          ai_proactive_suggestions?: boolean | null
+          animations_enabled?: boolean | null
+          browser_notifications?: boolean | null
+          compact_mode?: boolean | null
+          created_at?: string
+          daily_digest?: boolean | null
+          default_view?: string | null
+          email_notifications?: boolean | null
+          favorite_metrics?: string[] | null
+          goal_reminders?: boolean | null
+          hidden_sections?: string[] | null
+          id?: string
+          sidebar_collapsed?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+          weekly_summary?: boolean | null
+          widget_order?: Json | null
+        }
+        Update: {
+          accent_color?: string | null
+          ai_auto_insights?: boolean | null
+          ai_personality?: string | null
+          ai_proactive_suggestions?: boolean | null
+          animations_enabled?: boolean | null
+          browser_notifications?: boolean | null
+          compact_mode?: boolean | null
+          created_at?: string
+          daily_digest?: boolean | null
+          default_view?: string | null
+          email_notifications?: boolean | null
+          favorite_metrics?: string[] | null
+          goal_reminders?: boolean | null
+          hidden_sections?: string[] | null
+          id?: string
+          sidebar_collapsed?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+          weekly_summary?: boolean | null
+          widget_order?: Json | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          business_type: string | null
+          created_at: string
+          currency: string | null
+          email: string | null
+          fiscal_year_start: number | null
+          full_name: string | null
+          id: string
+          industry: string | null
+          last_active_at: string | null
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_step: number | null
+          revenue_range: string | null
+          service_types: string[] | null
+          target_market: string | null
+          timezone: string | null
+          total_sessions: number | null
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          business_type?: string | null
+          created_at?: string
+          currency?: string | null
+          email?: string | null
+          fiscal_year_start?: number | null
+          full_name?: string | null
+          id: string
+          industry?: string | null
+          last_active_at?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_step?: number | null
+          revenue_range?: string | null
+          service_types?: string[] | null
+          target_market?: string | null
+          timezone?: string | null
+          total_sessions?: number | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          business_type?: string | null
+          created_at?: string
+          currency?: string | null
+          email?: string | null
+          fiscal_year_start?: number | null
+          full_name?: string | null
+          id?: string
+          industry?: string | null
+          last_active_at?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_step?: number | null
+          revenue_range?: string | null
+          service_types?: string[] | null
+          target_market?: string | null
+          timezone?: string | null
+          total_sessions?: number | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          actions_taken: number | null
+          ai_interactions: number | null
+          browser: string | null
+          created_at: string
+          device_type: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          os: string | null
+          pages_viewed: number | null
+          screen_width: number | null
+          session_quality_score: number | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          actions_taken?: number | null
+          ai_interactions?: number | null
+          browser?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          os?: string | null
+          pages_viewed?: number | null
+          screen_width?: number | null
+          session_quality_score?: number | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          actions_taken?: number | null
+          ai_interactions?: number | null
+          browser?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          os?: string | null
+          pages_viewed?: number | null
+          screen_width?: number | null
+          session_quality_score?: number | null
+          started_at?: string
           user_id?: string
         }
         Relationships: []
